@@ -1,0 +1,73 @@
+* {
+    box-sizing: border-box;
+    font-family: "Source Code Pro", monospace;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #F5F5F5;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+h1, h2 {
+    text-align: center;
+    user-select: none;
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+iframe {
+    border: none;
+    flex: 1;
+    overflow: auto;
+}
+
+button {
+    background-color: #F0F0F0;
+    border: 1px solid #00000033;
+    border-radius: .25rem;
+    box-shadow: none;
+    font-size: 1rem;
+    overflow: scroll;
+    padding: .25rem 1rem;
+    text-overflow: ellipsis;
+}
+
+button:hover {
+    background-color: #E8E8E8;
+}
+
+button:active {
+    background-color: #E0E0E0;
+}
+
+button[type="submit"] {
+    background-color: #00AAFF;
+    border: none;
+    box-shadow: 0 3px 1px -2px #00000033, 0 2px 2px 0 #00000023, 0 1px 5px 0 #00000013;
+    color: white;
+    font-weight: 700;
+}
+
+button[type="submit"]:hover {
+    background-color: #0099FF;
+}
+
+button[type="submit"]:active {
+    background-color: #0088FF;
+}
+
+button[type="submit"]:disabled {
+    background-color: lightgrey;
+    box-shadow: none;
+    color: darkgrey;
+}
