@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
-	"os"
 	"path"
 	"strings"
 )
@@ -16,10 +15,9 @@ import (
 var viewkit embed.FS
 
 const (
-	inner  = "inner"
-	main   = "main"
-	static = "static"
-	view   = "view"
+	inner = "inner"
+	main  = "main"
+	view  = "view"
 )
 
 const innerHTML = `{{ define "inner" }}
@@ -62,8 +60,8 @@ func loader(readDir func(string) ([]fs.DirEntry, error), folder, suffix string) 
 	return out
 }
 
-func loadStyles() (styles string) {
-	entries := loader(os.ReadDir, static, ".css")
+func loadStyles(static embed.FS) (styles string) {
+	entries := loader(static.ReadDir, "static", ".css")
 	for _, entry := range entries {
 		styles += "\n\t" + "<link rel=\"stylesheet\" href=\"/" + entry + "\">"
 	}
@@ -90,14 +88,15 @@ type Configuration struct {
 	FuncMap   template.FuncMap
 }
 
-func New(cfg Configuration, templates embed.FS) Viewer {
+func New(cfg Configuration, static, templates embed.FS) Viewer {
 	cfg.Path = strings.Trim(path.Clean(cfg.Path), "/")
 	cfg.FuncMap["basepath"] = func() string { return cfg.Path }
 	return &viewer{
 		cfg:       cfg,
-		inner:     fmt.Sprintf(innerHTML, wrapTitle(cfg.Title), loadStyles()),
+		inner:     fmt.Sprintf(innerHTML, wrapTitle(cfg.Title), loadStyles(static)),
 		views:     make(map[string]http.HandlerFunc),
 		sources:   make(map[string]func(*http.Request) any),
+		static:    static,
 		templates: templates,
 	}
 }
@@ -107,6 +106,7 @@ type viewer struct {
 	inner     string
 	views     map[string]http.HandlerFunc
 	sources   map[string]func(*http.Request) any
+	static    embed.FS
 	templates embed.FS
 }
 
@@ -181,11 +181,10 @@ func (v *viewer) Inject(router *http.ServeMux) {
 	v.addMainView()
 	v.addTempView()
 
-	dir := http.Dir(static)
-	stat := http.FileServer(dir)
+	static := http.FileServer(http.FS(v.static))
 
 	faviconHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		f, err := dir.Open("favicon.ico")
+		f, err := v.static.Open("favicon.ico")
 		if err != nil {
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -194,11 +193,11 @@ func (v *viewer) Inject(router *http.ServeMux) {
 
 		w.Header().Set("Cache-Control", "public, max-age=86400")
 
-		stat.ServeHTTP(w, r)
+		static.ServeHTTP(w, r)
 	})
 
 	router.HandleFunc("/"+v.cfg.Path, v.handler)
 	router.Handle("/favicon.ico", faviconHandler)
-	router.Handle("/static/", http.StripPrefix("/static/", stat))
+	router.Handle("/static/", static)
 	router.Handle("/viewkit/", http.StripPrefix("/viewkit/", http.FileServer(http.FS(viewkit))))
 }
