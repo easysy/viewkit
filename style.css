@@ -37,7 +37,7 @@ button {
     border-radius: .25rem;
     box-shadow: none;
     font-size: 1rem;
-    overflow: scroll;
+    overflow: hidden;
     padding: .25rem 1rem;
     text-overflow: ellipsis;
 }
