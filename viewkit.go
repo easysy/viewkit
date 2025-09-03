@@ -181,10 +181,8 @@ func (v *viewer) Inject(router *http.ServeMux) {
 	v.addMainView()
 	v.addTempView()
 
-	static := http.FileServer(http.FS(v.static))
-
 	faviconHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		f, err := v.static.Open("favicon.ico")
+		f, err := v.static.Open("static/favicon.ico")
 		if err != nil {
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -192,8 +190,7 @@ func (v *viewer) Inject(router *http.ServeMux) {
 		_ = f.Close()
 
 		w.Header().Set("Cache-Control", "public, max-age=86400")
-
-		static.ServeHTTP(w, r)
+		http.ServeFileFS(w, r, v.static, "static/favicon.ico")
 	})
 
 	router.HandleFunc("/"+v.cfg.Path, v.handler)
