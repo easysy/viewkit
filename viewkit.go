@@ -195,6 +195,6 @@ func (v *viewer) Inject(router *http.ServeMux) {
 
 	router.HandleFunc("/"+v.cfg.Path, v.handler)
 	router.Handle("/favicon.ico", faviconHandler)
-	router.Handle("/static/", static)
+	router.Handle("/static/", http.FileServer(http.FS(v.static)))
 	router.Handle("/viewkit/", http.StripPrefix("/viewkit/", http.FileServer(http.FS(viewkit))))
 }
