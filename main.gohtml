@@ -1,0 +1,54 @@
+{{ define "body" }}
+    {{- template "main-header" . }}
+    <iframe id="view">Loading...</iframe>
+    {{- template "main-footer" . }}
+
+    <script>
+        let alreadyFired = false;
+
+        window.loadView = function (params, pushHistory = true) {
+            if (alreadyFired) {
+                return;
+            }
+            alreadyFired = true;
+
+            const url = new URL("/{{ basepath }}", location.origin);
+
+            if (params instanceof URLSearchParams) {
+                params.forEach((value, key) => url.searchParams.set(key, value));
+            } else {
+                for (const [key, value] of Object.entries(params)) {
+                    if (value != null) {
+                        url.searchParams.set(key, String(value));
+                    }
+                }
+            }
+
+            fetch(url, {headers: {"X-Content-Request": "true"}})
+                .then(res => res.text())
+                .then(html => {
+                    const view = document.getElementById("view");
+                    view.srcdoc = html;
+
+                    if (pushHistory) {
+                        history.pushState(null, "", url.pathname + url.search);
+                    }
+                })
+                .catch(console.error)
+                .finally(() => {alreadyFired = false});
+        }
+
+        window.addEventListener("popstate", () => {
+            const params = new URLSearchParams(location.search);
+            loadView(params, false);
+        });
+
+        window.addEventListener("DOMContentLoaded", () => {
+            loadView({{ .Params }});
+        });
+    </script>
+    {{- template "main-script" . }}
+{{ end }}
+{{ define "main-header" }}{{end}}
+{{ define "main-footer" }}{{end}}
+{{ define "main-script" }}{{end}}
